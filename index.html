@@ -1,0 +1,1962 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GhostDark — Cybersecurity Portfolio</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --red: #ff1a1a;
+        --red-dim: #cc0000;
+        --red-dark: #8b0000;
+        --red-glow: rgba(255, 26, 26, 0.35);
+        --red-faint: rgba(255, 26, 26, 0.08);
+        --bg: #050508;
+        --surface2: rgba(15, 5, 5, 0.7);
+        --border: rgba(255, 26, 26, 0.14);
+        --text: #e8d0d0;
+        --text-dim: #b9a5a5;
+        --text-mute: #3d2020;
+        --mono: "Share Tech Mono", monospace;
+        --sans: "Rajdhani", sans-serif;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      html,
+      body {
+        width: 100%;
+        min-height: 100%;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--sans);
+        overflow-x: hidden;
+        scrollbar-width: none;
+      }
+
+      body::-webkit-scrollbar {
+        display: none;
+      }
+
+      #threat-canvas {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        opacity: 0.72;
+      }
+
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        background: repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(0, 0, 0, 0.15) 2px,
+          rgba(0, 0, 0, 0.15) 4px
+        );
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+        background: radial-gradient(
+          ellipse at center,
+          transparent 40%,
+          rgba(0, 0, 0, 0.72) 100%
+        );
+      }
+
+      .page {
+        position: relative;
+        z-index: 10;
+      }
+
+      /* NAV */
+      nav {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.2rem 3rem;
+        border-bottom: 1px solid var(--border);
+        backdrop-filter: blur(10px);
+        background: rgba(5, 5, 8, 0.75);
+        transition: padding 0.3s;
+      }
+
+      nav.scrolled {
+        padding: 0.8rem 3rem;
+      }
+
+      .logo {
+        font-family: var(--mono);
+        font-size: 0.95rem;
+        color: var(--red);
+        letter-spacing: 0.1em;
+        text-shadow: 0 0 12px var(--red-glow);
+        text-decoration: none;
+      }
+
+      .logo span {
+        color: var(--text-dim);
+      }
+
+      nav ul {
+        list-style: none;
+        display: flex;
+        gap: 2.5rem;
+      }
+
+      nav ul a {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        text-decoration: none;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        transition:
+          color 0.2s,
+          text-shadow 0.2s;
+      }
+
+      nav ul a:hover {
+        color: var(--red);
+        text-shadow: 0 0 8px var(--red-glow);
+      }
+      .nav-toggle {
+        display: none;
+        flex-direction: column;
+        gap: 5px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+      }
+      .nav-toggle span {
+        display: block;
+        width: 22px;
+        height: 1px;
+        background: var(--text-dim);
+      }
+
+      /* FIXED UI */
+      .threat-log {
+        position: fixed;
+        right: 1.6rem;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 50;
+        width: 248px;
+        background: rgba(5, 5, 8, 0.8);
+        border: 1px solid var(--border);
+        backdrop-filter: blur(10px);
+      }
+      .log-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid var(--border);
+        font-family: var(--mono);
+        font-size: 0.62rem;
+        color: var(--red);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .log-header .dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--red);
+        animation: pulse-dot 1s infinite;
+      }
+      .log-entries {
+        max-height: 250px;
+        overflow: hidden;
+        padding: 0.3rem 0;
+      }
+      .log-entry {
+        display: flex;
+        gap: 0.45rem;
+        padding: 0.25rem 0.75rem;
+        font-family: var(--mono);
+        font-size: 0.58rem;
+        color: var(--text-dim);
+        border-bottom: 1px solid rgba(255, 26, 26, 0.04);
+        animation: slide-in 0.3s ease;
+      }
+      .le-time {
+        color: rgba(255, 26, 26, 0.45);
+        flex-shrink: 0;
+      }
+      .le-type {
+        color: var(--red);
+        flex-shrink: 0;
+      }
+      .le-route {
+        color: var(--text);
+      }
+
+      .stats-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 50;
+        display: flex;
+        justify-content: center;
+        gap: 3rem;
+        padding: 0.55rem 2rem;
+        background: rgba(5, 5, 8, 0.9);
+        border-top: 1px solid var(--border);
+        backdrop-filter: blur(10px);
+      }
+      .stat {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        color: var(--text-dim);
+      }
+      .stat-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--red);
+        box-shadow: 0 0 5px var(--red);
+        animation: pulse-dot 1.6s ease-in-out infinite;
+      }
+      .stat-val {
+        color: var(--red);
+        text-shadow: 0 0 6px var(--red-glow);
+      }
+
+      /* BUTTONS */
+      .btn {
+        display: inline-flex;
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        padding: 0.7rem 1.8rem;
+        border: 1px solid var(--red);
+        background: transparent;
+        color: var(--red);
+        cursor: pointer;
+        text-decoration: none;
+        position: relative;
+        overflow: hidden;
+        transition: color 0.25s;
+      }
+      .btn::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: var(--red);
+        transform: translateX(-101%);
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .btn:hover {
+        color: #000;
+      }
+      .btn:hover::before {
+        transform: translateX(0);
+      }
+      .btn span {
+        position: relative;
+        z-index: 1;
+      }
+      .btn-ghost {
+        border-color: var(--text-dim);
+        color: var(--text-dim);
+      }
+      .btn-ghost::before {
+        background: var(--text-dim);
+      }
+      .btn-ghost:hover {
+        color: #000;
+      }
+
+      /* HERO */
+      .hero {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-height: calc(100vh - 65px);
+        padding: 0 3rem;
+        max-width: 880px;
+        position: relative;
+      }
+      .hero-tag {
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        color: var(--red);
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        margin-bottom: 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+      }
+      .hero-tag::before {
+        content: "";
+        width: 22px;
+        height: 1px;
+        background: var(--red);
+        box-shadow: 0 0 6px var(--red);
+      }
+      .hero h1 {
+        font-family: var(--sans);
+        font-size: clamp(2.8rem, 6vw, 5.4rem);
+        font-weight: 700;
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+        color: #fff;
+        text-shadow: 0 0 40px rgba(255, 26, 26, 0.18);
+        margin-bottom: 0.3rem;
+      }
+      .hero h1 em {
+        font-style: normal;
+        color: var(--red);
+        text-shadow:
+          0 0 28px var(--red-glow),
+          0 0 60px rgba(255, 26, 26, 0.12);
+      }
+      .hero-sub {
+        font-family: var(--mono);
+        font-size: 0.88rem;
+        color: var(--text-dim);
+        margin-top: 1.4rem;
+        margin-bottom: 2.6rem;
+        max-width: 500px;
+        line-height: 1.7;
+      }
+      .cursor {
+        display: inline-block;
+        width: 8px;
+        height: 1em;
+        background: var(--red);
+        vertical-align: text-bottom;
+        animation: blink 1s step-end infinite;
+      }
+      .hero-cta {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+      .hero-scroll {
+        position: absolute;
+        bottom: 3.5rem;
+        left: 3rem;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-family: var(--mono);
+        font-size: 0.6rem;
+        color: var(--text-mute);
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+      }
+      .scroll-line {
+        width: 1px;
+        height: 36px;
+        background: linear-gradient(to bottom, var(--red-dim), transparent);
+        animation: scroll-pulse 2s ease-in-out infinite;
+      }
+
+      /* SECTIONS */
+      .section {
+        padding: 7rem 0;
+        position: relative;
+      }
+      .section::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(
+          to right,
+          transparent,
+          var(--border) 30%,
+          var(--border) 70%,
+          transparent
+        );
+      }
+      .section-inner {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 3rem;
+      }
+      .section-label {
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        color: var(--text-dim);
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+      }
+      .section-label span {
+        color: var(--red);
+      }
+      .section-title {
+        font-family: var(--sans);
+        font-size: clamp(1.8rem, 4vw, 3rem);
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        color: #fff;
+        margin-bottom: 3rem;
+        text-shadow: 0 0 30px rgba(255, 26, 26, 0.1);
+      }
+
+      /* ABOUT */
+      .about-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+        align-items: center;
+      }
+      .about-text p {
+        font-size: 1.15rem;
+        line-height: 1.75;
+        color: var(--text-dim);
+        margin-bottom: 1.2rem;
+      }
+      .about-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1.5rem;
+      }
+      .tag {
+        font-family: var(--mono);
+        font-size: 0.65rem;
+        color: var(--red);
+        border: 1px solid rgba(255, 26, 26, 0.3);
+        padding: 0.3rem 0.7rem;
+        letter-spacing: 0.08em;
+        background: var(--red-faint);
+      }
+      .about-terminal {
+        background: rgba(5, 5, 8, 0.85);
+        border: 1px solid var(--border);
+        overflow: hidden;
+        box-shadow: 0 0 30px rgba(255, 26, 26, 0.06);
+      }
+      .terminal-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.55rem 0.8rem;
+        background: rgba(255, 26, 26, 0.06);
+        border-bottom: 1px solid var(--border);
+      }
+      .tb-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+      }
+      .tb-red {
+        background: #ff5f57;
+      }
+      .tb-yellow {
+        background: #febc2e;
+      }
+      .tb-green {
+        background: #28c840;
+      }
+      .tb-title {
+        font-family: var(--mono);
+        font-size: 0.65rem;
+        color: var(--text-dim);
+        margin: 0 auto;
+      }
+      .terminal-body {
+        padding: 1rem 1.2rem 1.4rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+      }
+      .t-line {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        line-height: 1.6;
+      }
+      .t-prompt {
+        color: var(--red);
+        margin-right: 0.4rem;
+      }
+      .t-cmd {
+        color: #fff;
+      }
+      .t-out {
+        color: var(--text-dim);
+        padding-left: 0.5rem;
+      }
+      .t-cursor-line {
+        color: var(--red);
+        animation: blink 1s step-end infinite;
+      }
+
+      /* SKILLS */
+      .skills-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+        margin-bottom: 3rem;
+      }
+      .skill-category {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        padding: 1.6rem;
+      }
+      .skill-cat-header {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        color: var(--red);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 1.4rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .skill-bars {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .sb-label {
+        display: flex;
+        justify-content: space-between;
+        font-family: var(--mono);
+        font-size: 0.78rem;
+        color: var(--text-dim);
+        margin-bottom: 0.4rem;
+      }
+      .sb-pct {
+        color: var(--red);
+      }
+      .sb-track {
+        height: 3px;
+        background: rgba(255, 26, 26, 0.1);
+        overflow: hidden;
+      }
+      .sb-fill {
+        height: 100%;
+        width: 0;
+        background: linear-gradient(to right, var(--red-dark), var(--red));
+        box-shadow: 0 0 6px var(--red-glow);
+        transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .tools-wall {
+        padding: 2rem;
+        border: 1px solid var(--border);
+        background: var(--surface2);
+      }
+      .tools-label {
+        font-family: var(--mono);
+        font-size: 0.65rem;
+        color: var(--text-dim);
+        letter-spacing: 0.15em;
+        margin-bottom: 1rem;
+      }
+      .tools-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+      .tool-badge {
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        color: var(--text-dim);
+        border: 1px solid rgba(255, 26, 26, 0.18);
+        padding: 0.3rem 0.75rem;
+        background: rgba(255, 26, 26, 0.04);
+        transition:
+          color 0.2s,
+          border-color 0.2s,
+          background 0.2s;
+        cursor: default;
+      }
+      .tool-badge:hover {
+        color: var(--red);
+        border-color: rgba(255, 26, 26, 0.45);
+        background: rgba(255, 26, 26, 0.1);
+      }
+
+      /* PROJECTS */
+      .projects-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+      }
+      .project-card {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        padding: 1.8rem;
+        transition:
+          border-color 0.25s,
+          box-shadow 0.25s;
+      }
+      .project-card:hover {
+        border-color: rgba(255, 26, 26, 0.35);
+        box-shadow: 0 0 20px rgba(255, 26, 26, 0.06);
+      }
+      .pc-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+      }
+      .pc-status {
+        font-family: var(--mono);
+        font-size: 0.58rem;
+        letter-spacing: 0.12em;
+        padding: 0.2rem 0.55rem;
+      }
+      .pc-status--active {
+        background: rgba(255, 26, 26, 0.15);
+        color: var(--red);
+        border: 1px solid rgba(255, 26, 26, 0.3);
+      }
+      .pc-status--done {
+        background: rgba(0, 200, 80, 0.1);
+        color: #00c850;
+        border: 1px solid rgba(0, 200, 80, 0.25);
+      }
+      .pc-status--wip {
+        background: rgba(255, 180, 0, 0.1);
+        color: #ffb400;
+        border: 1px solid rgba(255, 180, 0, 0.25);
+      }
+      .pc-type {
+        font-family: var(--mono);
+        font-size: 0.6rem;
+        color: var(--text);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .pc-title {
+        font-family: var(--sans);
+        font-size: 1.35rem;
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: 0.75rem;
+      }
+      .pc-desc {
+        font-size: 1.05rem;
+        color: var(--text-dim);
+        line-height: 1.65;
+        margin-bottom: 1.2rem;
+      }
+      .pc-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-bottom: 1.2rem;
+      }
+      .pc-tags span {
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        color: var(--text-dim);
+        border: 1px solid var(--text-mute);
+        padding: 0.18rem 0.5rem;
+      }
+      .pc-links {
+        display: flex;
+        gap: 1.2rem;
+      }
+      .pc-link {
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        color: var(--red);
+        text-decoration: none;
+        letter-spacing: 0.08em;
+        transition: text-shadow 0.2s;
+      }
+      .pc-link:hover {
+        text-shadow: 0 0 8px var(--red-glow);
+      }
+      .pc-link--dim {
+        color: var(--text-dim);
+      }
+
+      /* CTF */
+      .ctf-top {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 2.5rem;
+      }
+      .ctf-stat-card {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        padding: 1.4rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        text-align: center;
+      }
+      .csc-val {
+        font-family: var(--sans);
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--red);
+        text-shadow: 0 0 20px var(--red-glow);
+      }
+      .csc-label {
+        font-family: var(--mono);
+        font-size: 0.6rem;
+        color: var(--text-dim);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .ctf-writeups {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        margin-bottom: 2rem;
+      }
+      .ctf-wu-header,
+      .ctf-wu-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+        padding: 0.7rem 1.2rem;
+        align-items: center;
+        border-bottom: 1px solid rgba(255, 26, 26, 0.06);
+      }
+      .ctf-wu-header {
+        font-family: var(--mono);
+        font-size: 0.6rem;
+        color: var(--text-dim);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        background: rgba(255, 26, 26, 0.04);
+        border-bottom-color: var(--border);
+      }
+      .ctf-wu-row {
+        transition: background 0.2s;
+      }
+      .ctf-wu-row:hover {
+        background: rgba(255, 26, 26, 0.04);
+      }
+      .ctf-wu-row--locked {
+        opacity: 0.5;
+      }
+      .ctf-wu-name,
+      .ctf-wu-platform,
+      .ctf-wu-cat {
+        font-family: var(--mono);
+        font-size: 0.68rem;
+      }
+      .ctf-wu-name {
+        color: var(--text);
+      }
+      .ctf-wu-platform {
+        color: var(--text-dim);
+      }
+      .ctf-wu-cat {
+        color: var(--text-dim);
+      }
+      .ctf-wu-diff {
+        font-family: var(--mono);
+        font-size: 0.6rem;
+        padding: 0.18rem 0.5rem;
+        display: inline-block;
+        width: fit-content;
+      }
+      .diff-easy {
+        color: #00c850;
+        border: 1px solid rgba(0, 200, 80, 0.3);
+        background: rgba(0, 200, 80, 0.08);
+      }
+      .diff-medium {
+        color: #ffb400;
+        border: 1px solid rgba(255, 180, 0, 0.3);
+        background: rgba(255, 180, 0, 0.08);
+      }
+      .diff-hard {
+        color: var(--red);
+        border: 1px solid rgba(255, 26, 26, 0.3);
+        background: var(--red-faint);
+      }
+      .ctf-wu-link {
+        font-family: var(--mono);
+        font-size: 0.62rem;
+        color: var(--red);
+        text-decoration: none;
+        transition: text-shadow 0.2s;
+      }
+      .ctf-wu-link:hover {
+        text-shadow: 0 0 8px var(--red-glow);
+      }
+      .ctf-wu-pending {
+        color: var(--text-mute);
+      }
+      .ctf-platforms {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+      .platform-badge {
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        color: var(--text-dim);
+        border: 1px solid var(--border);
+        padding: 0.5rem 1.2rem;
+        text-decoration: none;
+        transition:
+          color 0.2s,
+          border-color 0.2s;
+      }
+      .platform-badge:hover {
+        color: var(--red);
+        border-color: rgba(255, 26, 26, 0.4);
+      }
+
+      /* CONTACT */
+      .section--last {
+        padding-bottom: 6rem;
+      }
+      .contact-sub {
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        color: var(--text-dim);
+        line-height: 1.8;
+        margin-top: -1.5rem;
+        margin-bottom: 3rem;
+      }
+      .contact-grid {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 3.5rem;
+        align-items: start;
+      }
+      .cf-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+      .cf-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        margin-bottom: 1rem;
+      }
+      .cf-label {
+        font-family: var(--mono);
+        font-size: 0.62rem;
+        color: var(--text-dim);
+        letter-spacing: 0.1em;
+      }
+      .cf-input {
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        color: var(--text);
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        padding: 0.7rem 0.9rem;
+        outline: none;
+        transition: border-color 0.2s;
+        width: 100%;
+      }
+      .cf-input::placeholder {
+        color: var(--text-mute);
+      }
+      .cf-input:focus {
+        border-color: rgba(255, 26, 26, 0.4);
+      }
+      .cf-textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+      .cf-submit {
+        margin-top: 0.5rem;
+        width: 100%;
+        justify-content: center;
+      }
+      .contact-links {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        min-width: 260px;
+      }
+      .cl-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        text-decoration: none;
+        padding: 0.9rem 1rem;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        transition:
+          border-color 0.2s,
+          background 0.2s;
+      }
+      .cl-item:hover {
+        border-color: rgba(255, 26, 26, 0.35);
+        background: rgba(255, 26, 26, 0.04);
+      }
+      .cl-icon {
+        width: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        color: var(--red);
+        border: 1px solid rgba(255, 26, 26, 0.3);
+        flex-shrink: 0;
+      }
+      .cl-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+      }
+      .cl-label {
+        font-family: var(--mono);
+        font-size: 0.58rem;
+        color: var(--text-dim);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .cl-val {
+        font-family: var(--mono);
+        font-size: 0.65rem;
+        color: var(--text);
+      }
+
+      /* FOOTER */
+      .footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 3rem;
+        border-top: 1px solid var(--border);
+        background: rgba(5, 5, 8, 0.6);
+      }
+      .footer-mono {
+        font-family: var(--mono);
+        font-size: 0.65rem;
+        color: var(--text-mute);
+      }
+      .footer-red {
+        color: var(--red);
+      }
+      .footer-dim {
+        font-family: var(--mono);
+        font-size: 0.6rem;
+        color: var(--text-mute);
+      }
+
+      /* ANIMATIONS */
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0;
+        }
+      }
+      @keyframes pulse-dot {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.4;
+          transform: scale(0.6);
+        }
+      }
+      @keyframes slide-in {
+        from {
+          opacity: 0;
+          transform: translateX(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+      @keyframes scroll-pulse {
+        0%,
+        100% {
+          opacity: 0.3;
+        }
+        50% {
+          opacity: 0.8;
+        }
+      }
+
+      .reveal {
+        opacity: 0;
+        transform: translateY(24px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s ease;
+      }
+      .reveal.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* RESPONSIVE */
+      @media (max-width: 900px) {
+        nav {
+          padding: 1rem 1.5rem;
+        }
+        nav ul {
+          display: none;
+        }
+        nav ul.open {
+          display: flex;
+          flex-direction: column;
+          position: absolute;
+          top: 100%;
+          left: 0;
+          right: 0;
+          background: rgba(5, 5, 8, 0.97);
+          border-bottom: 1px solid var(--border);
+          padding: 1rem 1.5rem;
+          gap: 1rem;
+        }
+        .nav-toggle {
+          display: flex;
+        }
+        .hero,
+        .section-inner {
+          padding: 0 1.5rem;
+        }
+        .about-grid,
+        .skills-grid,
+        .projects-grid {
+          grid-template-columns: 1fr;
+        }
+        .ctf-top {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .contact-grid {
+          grid-template-columns: 1fr;
+        }
+        .threat-log {
+          display: none;
+        }
+        .stats-bar {
+          gap: 1rem;
+          flex-wrap: wrap;
+          padding: 0.4rem 1rem;
+        }
+        .footer {
+          flex-direction: column;
+          gap: 0.4rem;
+          padding: 1rem 1.5rem;
+          text-align: center;
+        }
+      }
+      @media (max-width: 600px) {
+        .hero h1 {
+          font-size: 2.4rem;
+        }
+        .ctf-wu-header,
+        .ctf-wu-row {
+          grid-template-columns: 2fr 1fr 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="threat-canvas"></canvas>
+
+    <div class="threat-log">
+      <div class="log-header"><span class="dot"></span> Live Threat Feed</div>
+      <div class="log-entries" id="log-entries"></div>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat">
+        <div class="stat-dot"></div>
+        Attacks/hr: <span class="stat-val" id="s-rate">—</span>
+      </div>
+      <div class="stat">
+        <div class="stat-dot"></div>
+        Top Origin: <span class="stat-val" id="s-top">—</span>
+      </div>
+      <div class="stat">
+        <div class="stat-dot"></div>
+        Attack Types: <span class="stat-val" id="s-types">—</span>
+      </div>
+      <div class="stat">
+        <div class="stat-dot"></div>
+        Blocked Today: <span class="stat-val" id="s-blocked">—</span>
+      </div>
+    </div>
+
+    <div class="page">
+      <nav id="navbar">
+        <div class="logo"><span>//</span> Gu_Bueno<span>.sec</span></div>
+        <ul>
+          <li><a href="#about">About</a></li>
+          <li><a href="#skills">Skills</a></li>
+          <li><a href="#projects">Projects</a></li>
+          <li><a href="#ctf">CTF</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+        <button class="nav-toggle" id="nav-toggle">
+          <span></span><span></span><span></span>
+        </button>
+      </nav>
+
+      <!-- HERO -->
+      <section class="hero" id="home">
+        <div class="hero-tag">Security Researcher</div>
+        <h1>Offensive.<br />Defensive.<br /><em>Relentless.</em></h1>
+        <p class="hero-sub">
+          Red Team · Blue Team · Pentesting<br />Turning vulnerabilities into
+          knowledge — and knowledge into defense.<span class="cursor"></span>
+        </p>
+        <div class="hero-cta">
+          <a href="#projects" class="btn"><span>View Projects</span></a>
+          <a href="#contact" class="btn btn-ghost"><span>Download CV</span></a>
+        </div>
+        <div class="hero-scroll">
+          <span>scroll</span>
+          <div class="scroll-line"></div>
+        </div>
+      </section>
+
+      <!-- ABOUT -->
+      <section class="section" id="about">
+        <div class="section-inner">
+          <div class="section-label"><span>//</span> 01 — About</div>
+          <div class="about-grid">
+            <div class="about-text">
+              <h2 class="section-title">Who Am I</h2>
+              <p>
+                Estudante de Segurança da Informação apaixonado por entender
+                como sistemas falham — e como protegê-los. Atuo na interseção
+                entre Red Team e Blue Team, acreditando que o melhor defensor é
+                aquele que pensa como atacante.
+              </p>
+              <p>
+                Atualmente explorando técnicas de pentesting, análise de malware
+                e monitoramento de ameaças em tempo real. Cada CTF é uma aula.
+                Cada vulnerabilidade, uma lição.
+              </p>
+              <div class="about-tags">
+                <span class="tag">Kali Linux</span
+                ><span class="tag">Wireshark</span
+                ><span class="tag">Metasploit</span>
+                <span class="tag">Burp Suite</span><span class="tag">Nmap</span
+                ><span class="tag">OSINT</span>
+              </div>
+            </div>
+            <div class="about-terminal">
+              <div class="terminal-bar">
+                <span class="tb-dot tb-red"></span
+                ><span class="tb-dot tb-yellow"></span
+                ><span class="tb-dot tb-green"></span>
+                <span class="tb-title">ghost@kali:~</span>
+              </div>
+              <div class="terminal-body">
+                <div class="t-line">
+                  <span class="t-prompt">ghost@kali:~$</span>
+                  <span class="t-cmd">whoami</span>
+                </div>
+                <div class="t-line t-out">ghostdark — security researcher</div>
+                <div class="t-line">
+                  <span class="t-prompt">ghost@kali:~$</span>
+                  <span class="t-cmd">cat focus.txt</span>
+                </div>
+                <div class="t-line t-out">
+                  Red Team / Blue Team / Pentesting
+                </div>
+                <div class="t-line t-out">CTF Player | Student | Builder</div>
+                <div class="t-line">
+                  <span class="t-prompt">ghost@kali:~$</span>
+                  <span class="t-cmd">locate passion</span>
+                </div>
+                <div class="t-line t-out">
+                  /usr/share/ghostdark/hacking-ethically
+                </div>
+                <div class="t-line t-out">
+                  /usr/share/ghostdark/breaking-to-fix
+                </div>
+                <div class="t-line">
+                  <span class="t-prompt">ghost@kali:~$</span>
+                  <span class="t-cursor-line">█</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SKILLS -->
+      <section class="section" id="skills">
+        <div class="section-inner">
+          <div class="section-label"><span>//</span> 02 — Skills</div>
+          <h2 class="section-title">Threat Dashboard</h2>
+          <div class="skills-grid">
+            <div class="skill-category">
+              <div class="skill-cat-header"><span>⚔</span> Offensive</div>
+              <div class="skill-bars">
+                <div class="skill-bar-item">
+                  <div class="sb-label">
+                    <span>Pentesting Web</span><span class="sb-pct">78%</span>
+                  </div>
+                  <div class="sb-track">
+                    <div class="sb-fill" data-pct="78"></div>
+                  </div>
+                </div>
+                <div class="skill-bar-item">
+                  <div class="sb-label">
+                    <span>Metasploit / Exploits</span
+                    ><span class="sb-pct">65%</span>
+                  </div>
+                  <div class="sb-track">
+                    <div class="sb-fill" data-pct="65"></div>
+                  </div>
+                </div>
+                <div class="skill-bar-item">
+                  <div class="sb-label">
+                    <span>OSINT</span><span class="sb-pct">82%</span>
+                  </div>
+                  <div class="sb-track">
+                    <div class="sb-fill" data-pct="82"></div>
+                  </div>
+                </div>
+                <div class="skill-bar-item">
+                  <div class="sb-label">
+                    <span>Social Engineering</span
+                    ><span class="sb-pct">70%</span>
+                  </div>
+                  <div class="sb-track">
+                    <div class="sb-fill" data-pct="70"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="skill-category">
+              <div class="skill-cat-header"><span>🛡</span> Defensive</div>
+              <div class="skill-bars">
+                <div class="skill-bar-item">
+                  <div class="sb-label">
+                    <span>Wireshark / Tráfego</span
+                    ><span class="sb-pct">75%</span>
+                  </div>
+                  <div class="sb-track">
+                    <div class="sb-fill" data-pct="75"></div>
+                  </div>
+                </div>
+                <div class="skill-bar-item">
+                  <div class="sb-label">
+                    <span>SIEM / Log Analysis</span
+                    ><span class="sb-pct">55%</span>
+                  </div>
+                  <div class="sb-track">
+                    <div class="sb-fill" data-pct="55"></div>
+                  </div>
+                </div>
+                <div class="skill-bar-item">
+                  <div class="sb-label">
+                    <span>Threat Intelligence</span
+                    ><span class="sb-pct">60%</span>
+                  </div>
+                  <div class="sb-track">
+                    <div class="sb-fill" data-pct="60"></div>
+                  </div>
+                </div>
+                <div class="skill-bar-item">
+                  <div class="sb-label">
+                    <span>Incident Response</span
+                    ><span class="sb-pct">58%</span>
+                  </div>
+                  <div class="sb-track">
+                    <div class="sb-fill" data-pct="58"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="skill-category">
+              <div class="skill-cat-header"><span>⚙</span> Technical</div>
+              <div class="skill-bars">
+                <div class="skill-bar-item">
+                  <div class="sb-label">
+                    <span>Linux / Bash</span><span class="sb-pct">85%</span>
+                  </div>
+                  <div class="sb-track">
+                    <div class="sb-fill" data-pct="85"></div>
+                  </div>
+                </div>
+                <div class="skill-bar-item">
+                  <div class="sb-label">
+                    <span>Python / Scripting</span
+                    ><span class="sb-pct">72%</span>
+                  </div>
+                  <div class="sb-track">
+                    <div class="sb-fill" data-pct="72"></div>
+                  </div>
+                </div>
+                <div class="skill-bar-item">
+                  <div class="sb-label">
+                    <span>Redes / TCP-IP</span><span class="sb-pct">80%</span>
+                  </div>
+                  <div class="sb-track">
+                    <div class="sb-fill" data-pct="80"></div>
+                  </div>
+                </div>
+                <div class="skill-bar-item">
+                  <div class="sb-label">
+                    <span>Docker / VMs</span><span class="sb-pct">68%</span>
+                  </div>
+                  <div class="sb-track">
+                    <div class="sb-fill" data-pct="68"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tools-wall">
+            <div class="tools-label">// Arsenal</div>
+            <div class="tools-list">
+              <span class="tool-badge">Nmap</span
+              ><span class="tool-badge">Burp Suite</span
+              ><span class="tool-badge">Metasploit</span>
+              <span class="tool-badge">Wireshark</span
+              ><span class="tool-badge">Hydra</span
+              ><span class="tool-badge">John the Ripper</span>
+              <span class="tool-badge">Gobuster</span
+              ><span class="tool-badge">SQLmap</span
+              ><span class="tool-badge">Nikto</span>
+              <span class="tool-badge">Aircrack-ng</span
+              ><span class="tool-badge">Volatility</span
+              ><span class="tool-badge">Ghidra</span>
+              <span class="tool-badge">Kali Linux</span
+              ><span class="tool-badge">Shodan</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROJECTS -->
+      <section class="section" id="projects">
+        <div class="section-inner">
+          <div class="section-label"><span>//</span> 03 — Projects</div>
+          <h2 class="section-title">Operations</h2>
+          <div class="projects-grid">
+            <div class="project-card">
+              <div class="pc-header">
+                <span class="pc-status pc-status--active">ACTIVE</span
+                ><span class="pc-type">Web Pentesting</span>
+              </div>
+              <h3 class="pc-title">Cyber Threat Map</h3>
+              <p class="pc-desc">
+                Mapa de ameaças em tempo real visualizando ataques globais
+                simulados. Desenvolvido com Canvas API, animações de arcos
+                bezier e feed de eventos ao vivo.
+              </p>
+              <div class="pc-tags">
+                <span>JavaScript</span><span>Canvas API</span
+                ><span>TopoJSON</span>
+              </div>
+              <div class="pc-links">
+                <a href="#" class="pc-link">// View Code</a
+                ><a href="#" class="pc-link pc-link--dim">// Live Demo</a>
+              </div>
+            </div>
+            <div class="project-card">
+              <div class="pc-header">
+                <span class="pc-status pc-status--done">COMPLETE</span
+                ><span class="pc-type">Network Analysis</span>
+              </div>
+              <h3 class="pc-title">Network Sniffer Tool</h3>
+              <p class="pc-desc">
+                Ferramenta de captura e análise de pacotes de rede em Python
+                usando Scapy. Filtragem por protocolo, exportação de logs e
+                detecção de padrões suspeitos.
+              </p>
+              <div class="pc-tags">
+                <span>Python</span><span>Scapy</span><span>TCP/IP</span>
+              </div>
+              <div class="pc-links">
+                <a href="#" class="pc-link">// View Code</a>
+              </div>
+            </div>
+            <div class="project-card">
+              <div class="pc-header">
+                <span class="pc-status pc-status--wip">WIP</span
+                ><span class="pc-type">OSINT</span>
+              </div>
+              <h3 class="pc-title">Recon Framework</h3>
+              <p class="pc-desc">
+                Framework modular de reconhecimento para OSINT — agrega dados de
+                múltiplas fontes abertas (WHOIS, Shodan, Certs) em relatórios
+                estruturados.
+              </p>
+              <div class="pc-tags">
+                <span>Python</span><span>Shodan API</span><span>OSINT</span>
+              </div>
+              <div class="pc-links">
+                <a href="#" class="pc-link">// View Code</a>
+              </div>
+            </div>
+            <div class="project-card">
+              <div class="pc-header">
+                <span class="pc-status pc-status--done">COMPLETE</span
+                ><span class="pc-type">Malware Analysis</span>
+              </div>
+              <h3 class="pc-title">Malware Sandbox Report</h3>
+              <p class="pc-desc">
+                Análise estática e dinâmica de amostras de malware em ambiente
+                isolado. Documentação de comportamento, IOCs e assinaturas de
+                detecção.
+              </p>
+              <div class="pc-tags">
+                <span>Ghidra</span><span>Volatility</span><span>YARA</span>
+              </div>
+              <div class="pc-links">
+                <a href="#" class="pc-link">// View Report</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CTF -->
+      <section class="section" id="ctf">
+        <div class="section-inner">
+          <div class="section-label"><span>//</span> 04 — CTF</div>
+          <h2 class="section-title">Capture The Flag</h2>
+          <div class="ctf-top">
+            <div class="ctf-stat-card">
+              <span class="csc-val">12</span
+              ><span class="csc-label">Challenges Solved</span>
+            </div>
+            <div class="ctf-stat-card">
+              <span class="csc-val">4</span
+              ><span class="csc-label">CTFs Participated</span>
+            </div>
+            <div class="ctf-stat-card">
+              <span class="csc-val">Top 30%</span
+              ><span class="csc-label">Best Ranking</span>
+            </div>
+            <div class="ctf-stat-card">
+              <span class="csc-val">3</span
+              ><span class="csc-label">Writeups Published</span>
+            </div>
+          </div>
+          <div class="ctf-writeups">
+            <div class="ctf-wu-header">
+              <span class="ctf-wu-col">Challenge</span
+              ><span class="ctf-wu-col">Platform</span>
+              <span class="ctf-wu-col">Category</span
+              ><span class="ctf-wu-col">Difficulty</span
+              ><span class="ctf-wu-col">Writeup</span>
+            </div>
+            <div class="ctf-wu-row">
+              <span class="ctf-wu-name">SQL Injection Chain</span
+              ><span class="ctf-wu-platform">HackTheBox</span
+              ><span class="ctf-wu-cat">Web</span
+              ><span class="ctf-wu-diff diff-medium">Medium</span
+              ><a href="#" class="ctf-wu-link">// Read</a>
+            </div>
+            <div class="ctf-wu-row">
+              <span class="ctf-wu-name">Buffer Overflow 101</span
+              ><span class="ctf-wu-platform">TryHackMe</span
+              ><span class="ctf-wu-cat">Pwn</span
+              ><span class="ctf-wu-diff diff-easy">Easy</span
+              ><a href="#" class="ctf-wu-link">// Read</a>
+            </div>
+            <div class="ctf-wu-row">
+              <span class="ctf-wu-name">Stego Hidden Signal</span
+              ><span class="ctf-wu-platform">PicoCTF</span
+              ><span class="ctf-wu-cat">Forensics</span
+              ><span class="ctf-wu-diff diff-easy">Easy</span
+              ><a href="#" class="ctf-wu-link">// Read</a>
+            </div>
+            <div class="ctf-wu-row ctf-wu-row--locked">
+              <span class="ctf-wu-name">RCE via Deserialization</span
+              ><span class="ctf-wu-platform">HackTheBox</span
+              ><span class="ctf-wu-cat">Web</span
+              ><span class="ctf-wu-diff diff-hard">Hard</span
+              ><span class="ctf-wu-link ctf-wu-pending">// In progress...</span>
+            </div>
+          </div>
+          <div class="ctf-platforms">
+            <a href="#" class="platform-badge">TryHackMe ↗</a>
+            <a href="#" class="platform-badge">HackTheBox ↗</a>
+            <a href="#" class="platform-badge">PicoCTF ↗</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONTACT -->
+      <section class="section section--last" id="contact">
+        <div class="section-inner">
+          <div class="section-label"><span>//</span> 05 — Contact</div>
+          <h2 class="section-title">Initialize Connection</h2>
+          <p class="contact-sub">
+            Aberto para oportunidades, colaborações e conversas sobre
+            security.<br />Respondo em até 24h.
+          </p>
+          <div class="contact-grid">
+            <div class="contact-form-wrap">
+              <div class="cf-row">
+                <div class="cf-group">
+                  <label class="cf-label">// Name</label
+                  ><input
+                    class="cf-input"
+                    type="text"
+                    placeholder="your_name"
+                  />
+                </div>
+                <div class="cf-group">
+                  <label class="cf-label">// Email</label
+                  ><input
+                    class="cf-input"
+                    type="email"
+                    placeholder="you@domain.com"
+                  />
+                </div>
+              </div>
+              <div class="cf-group">
+                <label class="cf-label">// Subject</label
+                ><input
+                  class="cf-input"
+                  type="text"
+                  placeholder="pentest_inquiry | collab | other"
+                />
+              </div>
+              <div class="cf-group">
+                <label class="cf-label">// Message</label
+                ><textarea
+                  class="cf-input cf-textarea"
+                  placeholder="Begin transmission..."
+                ></textarea>
+              </div>
+              <button class="btn cf-submit">
+                <span>// Send Message</span>
+              </button>
+            </div>
+            <div class="contact-links">
+              <a href="https://github.com/Darkghostly" class="cl-item"
+                ><span class="cl-icon">GH</span
+                ><span class="cl-info"
+                  ><span class="cl-label">GitHub</span
+                  ><span class="cl-val">github.com/Darkghostly</span></span
+                ></a
+              >
+              <a href="#" class="cl-item"
+                ><span class="cl-icon">LI</span
+                ><span class="cl-info"
+                  ><span class="cl-label">LinkedIn</span
+                  ><span class="cl-val">linkedin.com/in/ghostdark</span></span
+                ></a
+              >
+              <a href="#" class="cl-item"
+                ><span class="cl-icon">TH</span
+                ><span class="cl-info"
+                  ><span class="cl-label">TryHackMe</span
+                  ><span class="cl-val">tryhackme.com/p/ghostdark</span></span
+                ></a
+              >
+              <a href="#" class="cl-item"
+                ><span class="cl-icon">@</span
+                ><span class="cl-info"
+                  ><span class="cl-label">Email</span
+                  ><span class="cl-val">ghost@domain.com</span></span
+                ></a
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <span class="footer-mono"
+          >ghost@kali:~$ <span class="footer-red">echo</span> "Built with
+          intent. Secured by design."</span
+        >
+        <span class="footer-dim">© 2025 GhostDark</span>
+      </footer>
+    </div>
+    <!-- .page -->
+
+    <script>
+      // ═══════════════════════════════════════════════════════════
+      // THREAT MAP
+      // ═══════════════════════════════════════════════════════════
+
+      const CITIES = [
+        { name: "São Paulo", lat: -23.5, lon: -46.6 },
+        { name: "New York", lat: 40.7, lon: -74.0 },
+        { name: "London", lat: 51.5, lon: -0.1 },
+        { name: "Moscow", lat: 55.7, lon: 37.6 },
+        { name: "Beijing", lat: 39.9, lon: 116.4 },
+        { name: "Tokyo", lat: 35.7, lon: 139.7 },
+        { name: "Berlin", lat: 52.5, lon: 13.4 },
+        { name: "Lagos", lat: 6.5, lon: 3.4 },
+        { name: "Mumbai", lat: 19.1, lon: 72.9 },
+        { name: "Sydney", lat: -33.9, lon: 151.2 },
+        { name: "Tehran", lat: 35.7, lon: 51.4 },
+        { name: "Pyongyang", lat: 39.0, lon: 125.8 },
+        { name: "Bucharest", lat: 44.4, lon: 26.1 },
+        { name: "SJC", lat: -23.2, lon: -45.9 },
+        { name: "Chicago", lat: 41.9, lon: -87.6 },
+        { name: "Paris", lat: 48.9, lon: 2.3 },
+        { name: "Toronto", lat: 43.7, lon: -79.4 },
+        { name: "Seoul", lat: 37.6, lon: 127.0 },
+        { name: "Riyadh", lat: 24.7, lon: 46.7 },
+        { name: "Johannesburg", lat: -26.2, lon: 28.0 },
+        { name: "México", lat: 19.4, lon: -99.1 },
+      ];
+
+      const ATTACK_TYPES = [
+        "BRUTEFORCE",
+        "RANSOMWARE",
+        "PHISHING",
+        "SQL_INJ",
+        "DDoS",
+        "EXPLOIT",
+        "C2",
+        "0DAY",
+      ];
+      const ORIGINS = [
+        "CN",
+        "RU",
+        "KP",
+        "IR",
+        "BR",
+        "UA",
+        "US",
+        "RO",
+        "IN",
+        "NG",
+        "SA",
+        "DE",
+        "FR",
+        "GB",
+        "CA",
+        "KR",
+        "AU",
+        "JP",
+        "IT",
+        "ES",
+      ];
+
+      const canvas = document.getElementById("threat-canvas");
+      const ctx = canvas.getContext("2d");
+
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      resizeCanvas();
+      window.addEventListener("resize", resizeCanvas);
+
+      function project(lat, lon) {
+        return {
+          x: ((lon + 180) / 360) * canvas.width,
+          y: ((90 - lat) / 180) * canvas.height,
+        };
+      }
+
+      function isLand(lat, lon) {
+        if (lat > 55 && lat < 72 && lon > -165 && lon < -100) return true; // Alaska + Canadá Norte
+        if (lat > 30 && lat < 55 && lon > -125 && lon < -60) return true; // EUA + Canadá Sul
+        if (lat > 15 && lat < 30 && lon > -120 && lon < -85) return true; // México
+        if (lat > -55 && lat < 15 && lon > -82 && lon < -35) return true; // América do Sul
+        if (lat > 36 && lat < 72 && lon > -10 && lon < 40) return true; // Europa
+        if (lat > -35 && lat < 37 && lon > -18 && lon < 52) return true; // África
+        if (lat > 30 && lat < 72 && lon > 26 && lon < 60) return true; // Rússia europeia + Oriente Médio
+        if (lat > 10 && lat < 72 && lon > 60 && lon < 140) return true; // Ásia Central + China
+        if (lat > 30 && lat < 72 && lon > 100 && lon < 145) return true; // Japão + Coreia
+        if (lat > -10 && lat < 28 && lon > 68 && lon < 100) return true; // Índia + Indochina
+        if (lat > -10 && lat < 10 && lon > 95 && lon < 141) return true; // Sudeste Asiático
+        if (lat > -40 && lat < -10 && lon > 114 && lon < 154) return true; // Austrália
+        if (lat > 60 && lat < 84 && lon > -57 && lon < -18) return true; // Groenlândia
+        return false;
+      }
+
+      // Grid densa: passo 2 em ambas as direções para alta densidade
+      const MAP_DOTS = [];
+      for (let lat = -80; lat <= 80; lat += 2) {
+        for (let lon = -180; lon <= 180; lon += 2.5) {
+          if (isLand(lat, lon)) MAP_DOTS.push({ lat, lon });
+        }
+      }
+
+      // Partículas de fundo
+      const PARTICLES = Array.from({ length: 60 }, () => ({
+        x: Math.random(),
+        y: Math.random(),
+        r: Math.random() * 1.2 + 0.3,
+        a: Math.random() * 0.4 + 0.05,
+        s: (Math.random() - 0.5) * 0.0002,
+      }));
+
+      // Ataques
+      let attacks = [];
+
+      function spawnAttack() {
+        const src = CITIES[Math.floor(Math.random() * CITIES.length)];
+        let dst;
+        do {
+          dst = CITIES[Math.floor(Math.random() * CITIES.length)];
+        } while (dst === src);
+        attacks.push({
+          src,
+          dst,
+          progress: 0,
+          speed: 0.003 + Math.random() * 0.004,
+          type: ATTACK_TYPES[Math.floor(Math.random() * ATTACK_TYPES.length)],
+          intensity: Math.random(),
+        });
+      }
+
+      for (let i = 0; i < 6; i++) spawnAttack();
+      setInterval(spawnAttack, 900);
+
+      let blocked = 3247 + Math.floor(Math.random() * 200);
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Background
+        const bg = ctx.createRadialGradient(
+          canvas.width / 2,
+          canvas.height / 2,
+          0,
+          canvas.width / 2,
+          canvas.height / 2,
+          canvas.width * 0.7,
+        );
+        bg.addColorStop(0, "rgba(18,3,3,0.98)");
+        bg.addColorStop(0.5, "rgba(10,2,2,0.99)");
+        bg.addColorStop(1, "rgba(5,5,8,1)");
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Dot grid
+        MAP_DOTS.forEach((d) => {
+          const p = project(d.lat, d.lon);
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 0.9, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(140,30,30,0.25)";
+          ctx.fill();
+        });
+
+        // City nodes
+        CITIES.forEach((c) => {
+          const p = project(c.lat, c.lon);
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+          ctx.strokeStyle = "rgba(255,26,26,0.2)";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+          ctx.fillStyle = "#ff1a1a";
+          ctx.shadowColor = "#ff1a1a";
+          ctx.shadowBlur = 8;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        });
+
+        // Attack arcs
+        attacks.forEach((atk) => {
+          const s = project(atk.src.lat, atk.src.lon);
+          const d = project(atk.dst.lat, atk.dst.lon);
+          const mx = (s.x + d.x) / 2;
+          const my = (s.y + d.y) / 2 - Math.abs(d.x - s.x) * 0.3 - 40;
+          const t = atk.progress;
+
+          // Faint full arc
+          ctx.beginPath();
+          ctx.moveTo(s.x, s.y);
+          ctx.quadraticCurveTo(mx, my, d.x, d.y);
+          ctx.strokeStyle = `rgba(180,0,0,${0.08 + atk.intensity * 0.06})`;
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+
+          // Trail
+          ctx.beginPath();
+          let started = false;
+          for (let i = 0; i <= 30; i++) {
+            const ti = t - 0.18 + (i / 30) * 0.18;
+            if (ti < 0) continue;
+            const xi =
+              (1 - ti) * (1 - ti) * s.x +
+              2 * (1 - ti) * ti * mx +
+              ti * ti * d.x;
+            const yi =
+              (1 - ti) * (1 - ti) * s.y +
+              2 * (1 - ti) * ti * my +
+              ti * ti * d.y;
+            if (!started) {
+              ctx.moveTo(xi, yi);
+              started = true;
+            } else ctx.lineTo(xi, yi);
+          }
+          ctx.strokeStyle = `rgba(255,40,40,${0.6 + atk.intensity * 0.3})`;
+          ctx.lineWidth = 1.2;
+          ctx.shadowColor = "#ff1a1a";
+          ctx.shadowBlur = 6;
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+
+          // Packet head
+          const px =
+            (1 - t) * (1 - t) * s.x + 2 * (1 - t) * t * mx + t * t * d.x;
+          const py =
+            (1 - t) * (1 - t) * s.y + 2 * (1 - t) * t * my + t * t * d.y;
+          ctx.beginPath();
+          ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+          ctx.fillStyle = "#ffffff";
+          ctx.shadowColor = "#ff1a1a";
+          ctx.shadowBlur = 14;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+
+          atk.progress += atk.speed;
+        });
+
+        const finished = attacks.filter((a) => a.progress >= 1);
+        finished.forEach((a) => addLogEntry(a));
+        attacks = attacks.filter((a) => a.progress < 1);
+
+        PARTICLES.forEach((p) => {
+          p.x = (p.x + p.s + 1) % 1;
+          ctx.beginPath();
+          ctx.arc(p.x * canvas.width, p.y * canvas.height, p.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,26,26,${p.a * 0.3})`;
+          ctx.fill();
+        });
+
+        requestAnimationFrame(draw);
+      }
+      draw();
+
+      // Threat log
+      const logEl = document.getElementById("log-entries");
+      function addLogEntry(atk) {
+        const time = new Date().toTimeString().slice(0, 8);
+        const div = document.createElement("div");
+        div.className = "log-entry";
+        div.innerHTML = `<span class="le-time">${time}</span><span class="le-type">${atk.type}</span><span class="le-route">${atk.src.name.split(" ")[0]}→${atk.dst.name.split(" ")[0]}</span>`;
+        logEl.prepend(div);
+        while (logEl.children.length > 8) logEl.lastChild.remove();
+      }
+
+      // Stats bar
+      let rateBase = 200;
+      setInterval(() => {
+        rateBase += Math.floor(Math.random() * 5) + 1;
+        blocked += Math.floor(Math.random() * 4);
+        document.getElementById("s-rate").textContent = (
+          rateBase * 4
+        ).toLocaleString();
+        document.getElementById("s-top").textContent =
+          ORIGINS[Math.floor(Math.random() * ORIGINS.length)];
+        document.getElementById("s-types").textContent = ATTACK_TYPES.length;
+        document.getElementById("s-blocked").textContent =
+          blocked.toLocaleString();
+      }, 1400);
+
+      // ═══════════════════════════════════════════════════════════
+      // NAV + INTERAÇÕES
+      // ═══════════════════════════════════════════════════════════
+
+      const navbar = document.getElementById("navbar");
+      const navToggle = document.getElementById("nav-toggle");
+      const navUl = navbar.querySelector("ul");
+
+      window.addEventListener("scroll", () =>
+        navbar.classList.toggle("scrolled", window.scrollY > 60),
+      );
+      navToggle.addEventListener("click", () => navUl.classList.toggle("open"));
+      navUl
+        .querySelectorAll("a")
+        .forEach((a) =>
+          a.addEventListener("click", () => navUl.classList.remove("open")),
+        );
+
+      // Scroll reveal
+      document
+        .querySelectorAll(
+          ".project-card,.skill-category,.ctf-stat-card,.ctf-wu-row,.cl-item,.about-grid,.tools-wall,.ctf-writeups,.contact-grid",
+        )
+        .forEach((el) => {
+          el.classList.add("reveal");
+          new IntersectionObserver(
+            ([e]) => {
+              if (e.isIntersecting) {
+                const idx = [...e.target.parentElement.children].indexOf(
+                  e.target,
+                );
+                e.target.style.transitionDelay = `${idx * 80}ms`;
+                e.target.classList.add("visible");
+              }
+            },
+            { threshold: 0.12 },
+          ).observe(el);
+        });
+
+      // Skill bars
+      document.querySelectorAll(".sb-fill").forEach((el) => {
+        new IntersectionObserver(
+          ([e]) => {
+            if (e.isIntersecting) {
+              e.target.style.width = e.target.dataset.pct + "%";
+            }
+          },
+          { threshold: 0.5 },
+        ).observe(el);
+      });
+
+      // Contact form feedback
+      document.querySelector(".cf-submit").addEventListener("click", () => {
+        const inputs = document.querySelectorAll(".cf-input");
+        let ok = true;
+        inputs.forEach((i) => {
+          i.style.borderColor = i.value.trim() ? "" : "rgba(255,26,26,0.6)";
+          if (!i.value.trim()) ok = false;
+        });
+        if (ok) {
+          const btn = document.querySelector(".cf-submit span");
+          btn.textContent = "// Transmission Sent ✓";
+          document.querySelector(".cf-submit").style.cssText =
+            "border-color:#00c850;color:#00c850;pointer-events:none;width:100%;justify-content:center;";
+        }
+      });
+    </script>
+  </body>
+</html>
